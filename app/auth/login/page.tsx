@@ -155,6 +155,19 @@ export default function LoginPage() {
             </button>
             </form>
 
+            {/* Sign Up Link */}
+            <div className="mt-6 text-center">
+              <p className="text-gray-600">
+                New user?{' '}
+                <a 
+                  href="/auth/signup" 
+                  className="text-[#003566] font-bold hover:text-[#001D3D] hover:underline transition-all"
+                >
+                  Create an account
+                </a>
+              </p>
+            </div>
+
             {/* Decorative Elements */}
             <div className="mt-8 flex justify-center space-x-4 text-4xl">
             <span className="animate-bounce">🌟</span>
