@@ -10,6 +10,13 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Forgot Password Dialog States
+  const [showForgotPasswordDialog, setShowForgotPasswordDialog] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState('');
+  const [forgotPasswordError, setForgotPasswordError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +46,38 @@ export default function LoginPage() {
       setError('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotPasswordError('');
+    setForgotPasswordMessage('');
+    setForgotPasswordLoading(true);
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_API_URL}/auth/forget-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Success - show message
+        setForgotPasswordMessage(data.message || 'Password reset link sent to your email!');
+        setForgotEmail('');
+      } else {
+        // Handle error from backend
+        setForgotPasswordError(data.message || 'Failed to send reset link. Please try again.');
+      }
+    } catch (err) {
+      setForgotPasswordError('Network error. Please check your connection and try again.');
+    } finally {
+      setForgotPasswordLoading(false);
     }
   };
 
@@ -135,6 +174,17 @@ export default function LoginPage() {
                 </div>
             </div>
 
+            {/* Forgot Password Link */}
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => setShowForgotPasswordDialog(true)}
+                className="text-[#003566] cursor-pointer font-semibold hover:text-[#001D3D] hover:underline transition-all text-sm"
+              >
+                Forgot Password?
+              </button>
+            </div>
+
             {/* Submit Button */}
             <button
                 type="submit"
@@ -175,6 +225,90 @@ export default function LoginPage() {
             <span className="animate-bounce" style={{ animationDelay: '0.2s' }}>🎉</span>
             </div>
         </div>
+
+        {/* Forgot Password Dialog */}
+        {showForgotPasswordDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md relative">
+              {/* Close Button */}
+              <button
+                onClick={() => {
+                  setShowForgotPasswordDialog(false);
+                  setForgotEmail('');
+                  setForgotPasswordError('');
+                  setForgotPasswordMessage('');
+                }}
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              {/* Dialog Header */}
+              <div className="text-center mb-6">
+                <div className="text-5xl mb-3">🔐</div>
+                <h2 className="text-3xl font-bold text-[#000814] mb-2">
+                  Forgot Password?
+                </h2>
+                <p className="text-gray-600">
+                  Enter your email to receive a password reset link
+                </p>
+              </div>
+
+              {/* Success Message */}
+              {forgotPasswordMessage && (
+                <div className="mb-4 p-4 bg-green-100 border-2 border-green-400 rounded-2xl">
+                  <p className="text-green-700 text-center font-semibold">✅ {forgotPasswordMessage}</p>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {forgotPasswordError && (
+                <div className="mb-4 p-4 bg-red-100 border-2 border-red-400 rounded-2xl">
+                  <p className="text-red-700 text-center font-semibold">⚠️ {forgotPasswordError}</p>
+                </div>
+              )}
+
+              {/* Forgot Password Form */}
+              <form onSubmit={handleForgotPassword} className="space-y-6">
+                <div>
+                  <label htmlFor="forgotEmail" className="block text-lg font-bold text-[#000814] mb-2">
+                    Email
+                  </label>
+                  <input
+                    id="forgotEmail"
+                    type="email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    required
+                    disabled={forgotPasswordLoading}
+                    className="w-full px-4 py-3 text-[#001D3D] border-4 border-[#001D3D] rounded-lg focus:outline-none focus:border-[#003566] focus:ring-2 focus:ring-[#003566]/30 text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    placeholder="your@email.com"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={forgotPasswordLoading}
+                  className="w-full cursor-pointer py-4 bg-[#003566] text-white font-bold text-xl rounded-2xl hover:scale-105 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  {forgotPasswordLoading ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin h-6 w-6 mr-3" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Sending...
+                    </span>
+                  ) : (
+                    '✨ Verify Email ✨'
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
     </div>
   );
 }
